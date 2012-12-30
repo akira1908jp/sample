@@ -1,0 +1,4 @@
+cron:
+- description: remainder mail
+  url: /remainder
+  schedule: every day 07:00

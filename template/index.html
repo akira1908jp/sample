@@ -1,33 +1,123 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<script type="text/javascript" src="http://www.google.com/jsapi"></script>
-<script type="text/javascript">google.load("jquery", "1.6");</script>
+<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/hot-sneaks/jquery-ui.css" type="text/css" media="all" />
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
 <script type="text/javascript">
+
 $(document).ready(function(){
 
+  $("#todo_due_date").datepicker({
+      showOn: 'button',
+      buttonImage: '/images/calendar.gif',
+      buttonImageOnly: true,
+      dateFormat: 'yy/mm/dd',
+      changeMonth: true,
+      changeYear: true,
+      yearRange: '1990:2020',
+      showMonthAfterYear: false,
+  });
   var list = $("#todo_list");
 
   console.debug(list);
+  //input checked
+  $('input:checked').attr('checked', false);
+
+  $('input[name="todo_due_date"]').val("");
+  todo_delete(list);
+  todo_complete(list);
 
 });
+
+function todo_delete(list) {
+  $("input#delete").click(function(){
+
+    if(!confirm('Delete is Ok? ')) {
+      return ;
+    }
+
+
+    list.children('input').each(function(i){
+      //console.debug($(this).is('input:checkbox:checked'));
+      if ($(this).is('input:checkbox:checked')) {
+         var todo_key = $(this).nextAll('input:hidden').val();
+         console.debug(todo_key);
+         request('/delete', "todo_key=" + todo_key);
+       }
+    });
+
+  });
+}
+
+function todo_complete(list) {
+    $("input#complete").click(function(){
+
+
+    if(!confirm('Complete is Ok? ')) {
+      return ;
+    }
+
+      list.children('input').each(function(i){
+        //console.debug($(this).is('input:checkbox:checked'));
+        if ($(this).is('input:checkbox:checked')) {
+          var todo_key = $(this).nextAll('input:hidden').val();
+          console.debug(todo_key);
+          request('/complete', "todo_key=" + todo_key);
+        }
+      });
+    });
+}
+
+function edit() {
+
+}
+
+
+function request(url, data) {
+
+  $.ajax({
+    url : url
+    , data : data
+    , type : "get"
+    , cache: false
+    , async : true
+  });
+}
 
 </script>
 <title>TodoList</title>
   <body>
   <h2>TO DO Application</h2>
+  <a href="/">reload</a>
     <div id="todo_regsiter">
-      <form method="post">
-        <textarea name="todo_desc"></textarea>
+      <form method="post" action="/register">
+        <p>description:</p>
+        <textarea name="todo_desc"></textarea><br/>
+        <p>due Date:</p>
+        <input type="text" id="todo_due_date" name="todo_due_date" value="" readonly>
+        <br/>
         <input type="submit" value="register">
+
       </form>
     </div>
     <div id="todo_list">
       {% for toDo in toDoList %}
-        <input type="checkbox" name="todo_key" value="{{ toDo.key }}" />
-        <input type="textarea" name="todo_desc" value="{{ toDo.todo_desc }}" >
-        <span>{{ toDo.create_date|date:"Y/m/d"}}</span><br/>
+        {% if not toDo.complete_flg %}
+          <input type="checkbox" name="todo_key" value="" />
+        {% endif %}
+        <input type="hidden" name="todo_key" value="{{ toDo.key }}" >
+        <span>{{ toDo.todo_desc}}</span>
+        <span>{{ toDo.todo_due_date|date:"Y/m/d"}}</span>
+        {% if toDo.complete_flg %}
+          <span font="blue">complete</span>
+        {% endif %}
+        <br/>
       {% endfor %}
+    </div>
+    <div>
+       <input type="button" id="delete" value="delete">
+       <input type="button" id="complete" value="complete">
     </div>
   </body>
 </html>

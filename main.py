@@ -18,6 +18,7 @@
 import webapp2
 import os
 import logging
+import time,datetime
 from google.appengine.api import users
 from google.appengine.ext.webapp import template
 from google.appengine.ext import db
@@ -29,7 +30,10 @@ logging.getLogger().setLevel(logging.DEBUG)
 class ToDoData(db.Model):
 	# author = db.UserProperty()
 	todo_desc = db.StringProperty(multiline=True)
+	todo_due_date = db.DateProperty()
+	complete_flg = db.BooleanProperty()
 	create_date = db.DateTimeProperty(auto_now_add=True)
+	update_date = db.DateTimeProperty(auto_now=True)
 
 
 
@@ -49,18 +53,35 @@ class EditHandler(webapp2.RequestHandler):
 		ToDoData.put()
 
 class DeleteHandler(webapp2.RequestHandler):
-	def post(self):
-		todoKey = self.request.get('todo_key')
-		if toDoKey:
-			self.redirect('/')
+	def get(self):
+		toDoKey = self.request.get('todo_key')
+		logging.debug(toDoKey)
+		if toDoKey is None:
+			return
 
-		todo = ToDoData.get(toDoKey)
+		entity = db.get(toDoKey)
+		logging.debug(entity)
 
-		if todo:
-			todo.delete()
+		if entity:
+			entity.delete()
+		# entityKey = db.Key.from_path(toDoKey)
+		# todoModel = db.get(entityKey)
 
-		self.redirect('/')
+		# todoModel.delete()
 
+class CompleteHandler(webapp2.RequestHandler):
+	def get(self):
+		toDoKey = self.request.get('todo_key')
+		logging.debug(toDoKey)
+		# if toDoKey:
+		# 	return
+
+		entity = db.get(toDoKey)
+		logging.debug(entity)
+
+		if entity:
+			entity.complete_flg = True
+			entity.put()
 
 class ShowHandler(webapp2.RequestHandler):
 	def get(self):
@@ -75,13 +96,22 @@ class ShowHandler(webapp2.RequestHandler):
 		path = os.path.join(os.path.dirname(__file__), 'template/index.html')
 		self.response.out.write(template.render(path, template_values))
 
-	def post(self):
 
+class RegisterHandler(webapp2.RequestHandler):
+	def post(self):
 		toDo = ToDoData()
 
 		desc = self.request.get('todo_desc')
+		str_due_date = self.request.get('todo_due_date')
+
+
+		st = time.strptime(str_due_date, '%Y/%m/%d')
+		due_date = datetime.date(st[0], st[1], st[2])
 		logging.debug(desc)
+		logging.debug(due_date)
 		toDo.todo_desc = desc
+		toDo.todo_due_date = due_date
+		toDo.complete_flg = False
 		toDo.put()
 		self.redirect('/')
 
@@ -89,5 +119,8 @@ class ShowHandler(webapp2.RequestHandler):
 app = webapp2.WSGIApplication([
     ('/', ShowHandler)
     , ('/show', ShowHandler)
-    , ('/edit', EditHandler)
+    , ('/register', RegisterHandler)
+    # , ('/edit', EditHandler)
+    , ('/delete', DeleteHandler)
+    , ('/complete', CompleteHandler)
 ], debug=True)
