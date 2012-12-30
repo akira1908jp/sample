@@ -1,0 +1,33 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+<script type="text/javascript">google.load("jquery", "1.6");</script>
+<script type="text/javascript">
+$(document).ready(function(){
+
+  var list = $("#todo_list");
+
+  console.debug(list);
+
+});
+
+</script>
+<title>TodoList</title>
+  <body>
+  <h2>TO DO Application</h2>
+    <div id="todo_regsiter">
+      <form method="post">
+        <textarea name="todo_desc"></textarea>
+        <input type="submit" value="register">
+      </form>
+    </div>
+    <div id="todo_list">
+      {% for toDo in toDoList %}
+        <input type="checkbox" name="todo_key" value="{{ toDo.key }}" />
+        <input type="textarea" name="todo_desc" value="{{ toDo.todo_desc }}" >
+        <span>{{ toDo.create_date|date:"Y/m/d"}}</span><br/>
+      {% endfor %}
+    </div>
+  </body>
+</html>

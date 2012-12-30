@@ -1,0 +1,52 @@
+課題
+------------------------------------------------------------
+簡易TODOアプリの開発
+
+必須要件
+・Google App Engine x Python
+・TODOの追加
+・TODOの削除
+・TODOの完了
+・非同期で処理を行う
+・Due Dateの設定
+
+出来れば
+・ログイン機能
+・TODOの編集
+・Due Dateをリマインダーで知らせる（通知手段はメール）
+・Due Dateの通知メールから、TODOを完了できる
+
+その他
+フレームワーク等は自由です。
+GAE標準のWebApp2で構いません。
+デザイン等は基本的に考慮する必要はありません。
+内容や、仕様等に関する質問はいくらでも受け付けます。
+
+参考
+Google App Engine上で動作するTODOアプリ１（Python製。フレームワークはDjango）
+http://d.hatena.ne.jp/molakin/20090507/1241670800
+
+Google App Engine上で動作するTODOアプリ２（ソースコードも公開されていますが、こちらはJava製です。）
+http://todo-list-everywhere.appspot.com/
+
+
+
+
+GAE/logging
+http://jutememo.blogspot.jp/2008/08/google-app-engine-python.html
+
+
+データストアクリア
+/path/to/google_appengine/dev_appserver.py --clear_datastore myappname/
+
+OAuth認証
+http://blogs.dion.ne.jp/kotemaru/archives/10093611.html
+
+
+keyで更新する
+チャックボックスにチェックあったら更新
+ajaxで更新
+uriは/edit
+単一、複数どっちでも
+updateはkeyで取得したentityを変更してput関数で実行
+
