@@ -1,0 +1,7 @@
+<div id="login">
+  {% if user %}
+    {{ user.email }} <a href="{{ logout_url }}">ログアウト</a>
+  {% else %}
+    <a href="{{ login_url }}">ログイン</a>
+  {% endif %}
+</div>

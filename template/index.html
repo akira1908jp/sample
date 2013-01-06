@@ -4,31 +4,59 @@
 <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/hot-sneaks/jquery-ui.css" type="text/css" media="all" />
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
+<script src="../script/dist/jquery.validate.min.js"></script>
+<script src="../script/localization/messages_ja.js "></script>
 <script type="text/javascript">
 
 $(document).ready(function(){
 
   $("#todo_due_date").datepicker({
       showOn: 'button',
-      buttonImage: '/images/calendar.gif',
+      // buttonImage: '/images/calendar.gif',
       buttonImageOnly: true,
       dateFormat: 'yy/mm/dd',
       changeMonth: true,
       changeYear: true,
       yearRange: '1990:2020',
       showMonthAfterYear: false,
+  }).focus(function(){
+    $("#todo_due_date").datepicker("show");
   });
+
+  // form validate
+  $("#todoForm").validate();
+
   var list = $("#todo_list");
 
-  console.debug(list);
+  // console.debug(list);
   //input checked
   $('input:checked').attr('checked', false);
 
-  $('input[name="todo_due_date"]').val("");
+  todo_register();
   todo_delete(list);
   todo_complete(list);
+  todo_edit(list);
+
 
 });
+
+function todo_register() {
+  $("input#register").click(function(){
+    if(!$("#todoForm").valid()) {
+      return ;
+    }
+    var form = $("#todoForm");
+    var req = {};
+    req.url = form.attr('action');
+    req.data = {"todo_desc": $("form > [name=todo_desc]").val(), "todo_due_date": $("form > #todo_due_date").val()};
+    req.type = form.attr('method');
+    req.cache = false;
+    req.async = true;
+    console.log(req);
+    $.ajax(req);
+  });
+
+}
 
 function todo_delete(list) {
   $("input#delete").click(function(){
@@ -38,9 +66,10 @@ function todo_delete(list) {
     }
 
 
-    list.children('input').each(function(i){
+    list.children().children('input').each(function(i){
+
       //console.debug($(this).is('input:checkbox:checked'));
-      if ($(this).is('input:checkbox:checked')) {
+      if ($(this).is('div > input:checkbox:checked')) {
          var todo_key = $(this).nextAll('input:hidden').val();
          console.debug(todo_key);
          request('/delete', "todo_key=" + todo_key);
@@ -58,9 +87,9 @@ function todo_complete(list) {
       return ;
     }
 
-      list.children('input').each(function(i){
+      list.children().children('input').each(function(i){
         //console.debug($(this).is('input:checkbox:checked'));
-        if ($(this).is('input:checkbox:checked')) {
+        if ($(this).is('div > input:checkbox:checked')) {
           var todo_key = $(this).nextAll('input:hidden').val();
           console.debug(todo_key);
           request('/complete', "todo_key=" + todo_key);
@@ -69,8 +98,18 @@ function todo_complete(list) {
     });
 }
 
-function edit() {
+function todo_edit() {
 
+   $("input#edit").click(function(){
+    var todo_desc = $(this).prevAll("span#todo_desc");
+    var todo_desc_text = todo_desc.text();
+    var todo_due_date = $(this).prevAll("span#todo_due_date");
+    console.log(todo_desc_text);
+    console.log(todo_due_date);
+    $(todo_desc).replaceWith("<input type='textarea' id='todo_desc'></input>");
+    $("#todo_desc").text(todo_desc_text);
+
+   });
 }
 
 
@@ -88,31 +127,45 @@ function request(url, data) {
 </script>
 <title>TodoList</title>
   <body>
-  <h2>TO DO Application</h2>
+  <h2>
+    {% if user.nickname %}
+    {{ user.nickname}} 's
+    {% endif %}
+    TO DO Application
+  </h2>
   <a href="/">reload</a>
     <div id="todo_regsiter">
-      <form method="post" action="/register">
+      <form id="todoForm" method="post" action="/register">
         <p>description:</p>
-        <textarea name="todo_desc"></textarea><br/>
+        <textarea name="todo_desc" class="required"></textarea><br/>
         <p>due Date:</p>
-        <input type="text" id="todo_due_date" name="todo_due_date" value="" readonly>
+        <input type="text" id="todo_due_date" name="todo_due_date" value="" class="required date">
         <br/>
+        <!--
         <input type="submit" value="register">
-
+        -->
+        <input type="button" id="register" value="register">
       </form>
     </div>
     <div id="todo_list">
       {% for toDo in toDoList %}
+        <div>
         {% if not toDo.complete_flg %}
           <input type="checkbox" name="todo_key" value="" />
         {% endif %}
         <input type="hidden" name="todo_key" value="{{ toDo.key }}" >
-        <span>{{ toDo.todo_desc}}</span>
-        <span>{{ toDo.todo_due_date|date:"Y/m/d"}}</span>
+        <span id="todo_desc">{{ toDo.todo_desc}}</span>
+        <span id="todo_due_date">{{ toDo.todo_due_date|date:"Y/m/d"}}</span>
+
         {% if toDo.complete_flg %}
           <span font="blue">complete</span>
+        {% else %}
+        <!--
+          <input type="button" id="edit" value="edit">
+        -->
         {% endif %}
         <br/>
+        </div>
       {% endfor %}
     </div>
     <div>

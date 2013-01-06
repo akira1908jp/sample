@@ -9,8 +9,13 @@ handlers:
   static_files: favicon.ico
   upload: favicon\.ico
 
+- url: /script
+  static_dir: jquery-validation-1.10.0
+  mime_type: text/javascript
+
 - url: .*
   script: main.app
+  login: required
 
 
 libraries:

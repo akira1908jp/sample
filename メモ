@@ -50,3 +50,23 @@ uriは/edit
 単一、複数どっちでも
 updateはkeyで取得したentityを変更してput関数で実行
 
+バリデーション
+jqueryヴァリデーション
+・未入力チェック
+・日付妥当性チェック
+
+
+ログイン/ログアウト
+
+
+リマインダー
+/remainder
+
+当日+1を期限日を条件に、取得する
+取得したらメール送信を行う
+
+編集
+
+
+"http://" + os.environ['HTTP_HOST'] + "/complete?todo_key="
+

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#!/usr/bin/env python
+# encoding: utf-8
 #
 # Copyright 2007 Google Inc.
 #
@@ -22,13 +22,14 @@ import time,datetime
 from google.appengine.api import users
 from google.appengine.ext.webapp import template
 from google.appengine.ext import db
+from google.appengine.api import mail
 
 # logging define
 logging.getLogger().setLevel(logging.DEBUG)
 
 
 class ToDoData(db.Model):
-	# author = db.UserProperty()
+	user = db.UserProperty()
 	todo_desc = db.StringProperty(multiline=True)
 	todo_due_date = db.DateProperty()
 	complete_flg = db.BooleanProperty()
@@ -43,13 +44,20 @@ class MainHandler(webapp2.RequestHandler):
 
 class EditHandler(webapp2.RequestHandler):
 	def post(self):
+		toDoKey = self.request.get('todo_key')
 		desc = self.request.get('todo_desc')
-		if desc:
-			self.redirect('/show')
+		str_due_date = self.request.get('todo_due_date')
+		# if desc:
+		# 	self.redirect('/show')
 
-		todoData = ToDoData()
+		st = time.strptime(str_due_date, '%Y/%m/%d')
+		due_date = datetime.date(st[0], st[1], st[2])
+
+		todoData = db.get(toDoKey)
+		logging.debug(todoData)
 
 		todoData.todo_desc = desc
+		todoData.todo_due_date = due_date
 		ToDoData.put()
 
 class DeleteHandler(webapp2.RequestHandler):
@@ -64,18 +72,17 @@ class DeleteHandler(webapp2.RequestHandler):
 
 		if entity:
 			entity.delete()
-		# entityKey = db.Key.from_path(toDoKey)
-		# todoModel = db.get(entityKey)
 
-		# todoModel.delete()
 
 class CompleteHandler(webapp2.RequestHandler):
 	def get(self):
 		toDoKey = self.request.get('todo_key')
 		logging.debug(toDoKey)
-		# if toDoKey:
+		# if not toDoKey is None:
 		# 	return
 
+
+		logging.debug(self.response.headers)
 		entity = db.get(toDoKey)
 		logging.debug(entity)
 
@@ -83,16 +90,17 @@ class CompleteHandler(webapp2.RequestHandler):
 			entity.complete_flg = True
 			entity.put()
 
+
 class ShowHandler(webapp2.RequestHandler):
 	def get(self):
 
 		user = users.get_current_user()
 		logging.debug(user)
 
-		#toDoList = db.GqlQuery('SELECT * from ToDoData order by create_date DESC')
-		toDoList = ToDoData.all()
-		toDoList.order('-create_date')
-		template_values = {'toDoList':toDoList}
+
+		toDoList = ToDoData.all().filter('user', user)
+		toDoList.order('-todo_due_date')
+		template_values = {'toDoList':toDoList, 'user': user}
 		path = os.path.join(os.path.dirname(__file__), 'template/index.html')
 		self.response.out.write(template.render(path, template_values))
 
@@ -112,8 +120,35 @@ class RegisterHandler(webapp2.RequestHandler):
 		toDo.todo_desc = desc
 		toDo.todo_due_date = due_date
 		toDo.complete_flg = False
+		toDo.user = users.get_current_user()
 		toDo.put()
-		self.redirect('/')
+		# self.redirect('/')
+
+
+class RemainderHandler(webapp2.RequestHandler):
+	def get(self):
+		nowDate = datetime.date.today()
+		yesterday = nowDate - datetime.timedelta(days=1)
+		logging.debug(yesterday)
+		todoList = ToDoData.all().filter("todo_due_date >=", yesterday).filter("complete_flg = ", False)
+
+		for todo in todoList:
+
+			message = mail.EmailMessage()
+			message.sender = "Example.com Support <support@example.com>"
+			message.to = todo.user.email()
+			message.subject = "To Do remainder"
+			message.body = u"""
+			remainder　
+			desc:%s
+			duu date:%s
+
+			complete:%s """ % (todo.todo_desc, todo.todo_due_date, "http://" + os.environ['HTTP_HOST'] + "/complete?todo_key=" + str(todo.key()) )
+
+			message.send()
+
+
+
 
 
 app = webapp2.WSGIApplication([
@@ -123,4 +158,5 @@ app = webapp2.WSGIApplication([
     # , ('/edit', EditHandler)
     , ('/delete', DeleteHandler)
     , ('/complete', CompleteHandler)
+    , ('/remainder', RemainderHandler)
 ], debug=True)
